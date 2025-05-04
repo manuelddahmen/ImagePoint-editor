@@ -25,39 +25,53 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(firebaseInitializationError); // Use error from firebase.ts
+  // Use the initialization error captured in firebase.ts as the initial state
+  const [error, setError] = useState<string | null>(firebaseInitializationError);
 
   useEffect(() => {
-    // Only set up listener if auth was initialized successfully
+    // If there was an initialization error detected in firebase.ts, don't attempt to listen
+    if (firebaseInitializationError) {
+        setLoading(false);
+        return;
+    }
+
+    // Only set up listener if auth was initialized successfully AND no config error detected
     if (auth) {
       const unsubscribe = onAuthStateChanged(auth, (user) => {
         setUser(user);
         setLoading(false);
         setError(null); // Clear error if auth state changes successfully
       }, (error) => {
-        // Handle errors during auth state observation (less common)
+        // Handle errors during auth state observation (e.g., network issues, token expiry)
         console.error("Auth state change error:", error);
         setError(`Auth state error: ${error.message}`);
+        setUser(null); // Ensure user is null on auth error
         setLoading(false);
       });
 
       // Cleanup subscription on unmount
       return () => unsubscribe();
     } else {
-      // If auth is null (due to init error), stop loading and keep the error state
+      // If auth is unexpectedly null (and no init error was caught earlier), set loading false.
+      // The firebaseInitializationError should have caught config issues.
       setLoading(false);
+      if (!error) { // Avoid overwriting the specific config error
+        setError("Firebase Auth instance is not available.");
+        console.error("Firebase Auth instance is not available.");
+      }
     }
-  }, []); // Dependency array is empty because `auth` and `firebaseInitializationError` are stable module exports
+  }, []); // Dependency array includes `error` to potentially react if error state changes, though primarily driven by init.
 
   // Show an error message if Firebase initialization failed
-  if (error && !loading) { // Show error only after initial check
+  // This now correctly catches the error set initially from firebase.ts
+  if (error && !loading) { // Show error only after initial check or if an error occurs later
     return (
-       <div className="flex items-center justify-center min-h-screen p-4">
+       <div className="flex items-center justify-center min-h-screen p-4 bg-background">
            <Alert variant="destructive" className="max-w-md">
               <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Firebase Initialization Failed</AlertTitle>
+              <AlertTitle>Authentication Unavailable</AlertTitle>
               <AlertDescription>
-                 {error} Please check your Firebase configuration in the environment variables and ensure the Firebase project is set up correctly.
+                 {error} Please check your Firebase configuration in the environment variables and ensure the Firebase project is set up correctly. Authentication features will be disabled.
               </AlertDescription>
            </Alert>
        </div>
@@ -67,10 +81,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Show a loading state while Firebase initializes or auth state is being checked
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        {/* You can keep or customize the loading skeleton */}
-        {/* <Skeleton className="h-12 w-12 rounded-full" />
-           <Skeleton className="h-4 w-[250px] ml-4" /> */}
+      <div className="flex items-center justify-center min-h-screen bg-background text-foreground">
+        {/* Simple loading text */}
         <p>Loading authentication...</p>
       </div>
     );
