@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { ChangeEvent, MouseEvent } from "react";
@@ -10,6 +11,7 @@ import type { Point } from "@/types";
 import { cn } from "@/lib/utils";
 
 interface ImagePanelProps {
+  uniqueId: string; // Added uniqueId prop
   imageSrc: string | null;
   points: Point[];
   selectedPointId: string | null;
@@ -23,6 +25,7 @@ interface ImagePanelProps {
 }
 
 export function ImagePanel({
+  uniqueId, // Destructure uniqueId
   imageSrc,
   points,
   selectedPointId,
@@ -36,6 +39,7 @@ export function ImagePanel({
 }: ImagePanelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const uploadInputId = `upload-${uniqueId}`; // Use uniqueId for stable ID
 
   // Update container size for responsive point rendering
   useEffect(() => {
@@ -107,10 +111,10 @@ export function ImagePanel({
          )}
        </div>
       <Button variant="outline" size="sm" asChild>
-        <label htmlFor={`upload-${imageRef.current?.id ?? Math.random()}`} className="cursor-pointer">
+        <label htmlFor={uploadInputId} className="cursor-pointer"> {/* Use stable ID */}
           <Upload className="mr-2 h-4 w-4" /> Upload Image
           <Input
-            id={`upload-${imageRef.current?.id ?? Math.random()}`}
+            id={uploadInputId} // Use stable ID
             type="file"
             accept="image/*"
             onChange={onImageUpload}

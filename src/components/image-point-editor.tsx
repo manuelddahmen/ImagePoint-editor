@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { ChangeEvent, MouseEvent } from "react";
@@ -50,21 +51,25 @@ export function ImagePointEditor() {
     if (!imageRef.current) return;
 
     const rect = imageRef.current.getBoundingClientRect();
-    const imgWidth = imageRef.current.naturalWidth;
-    const imgHeight = imageRef.current.naturalHeight;
-    const displayWidth = rect.width;
-    const displayHeight = rect.height;
+    // Use offsetWidth/Height of the *container* (the div with the background) for scaling calculation,
+    // as the image itself might not fill the container due to objectFit="contain".
+    // We rely on the container's dimensions as the reference for the 0-1 scale.
+    const container = (e.target as HTMLElement).closest('div[class*="cursor-crosshair"]');
+    if (!container) return; // Should not happen if click is on the correct element
 
-    // Calculate click position relative to the image element
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
+    const containerWidth = container.offsetWidth;
+    const containerHeight = container.offsetHeight;
 
-    // Scale the click position to the natural image dimensions if needed,
-    // but for scaled coordinates, we use the display dimensions.
-    const scaledX = clickX / displayWidth;
-    const scaledY = clickY / displayHeight;
 
-    // Ensure coordinates are within [0, 1]
+    // Calculate click position relative to the container element
+    const clickX = e.clientX - container.getBoundingClientRect().left;
+    const clickY = e.clientY - container.getBoundingClientRect().top;
+
+    // Scale the click position relative to the container's dimensions.
+    const scaledX = clickX / containerWidth;
+    const scaledY = clickY / containerHeight;
+
+    // Ensure coordinates are within [0, 1] bounds
     const finalX = Math.max(0, Math.min(1, scaledX));
     const finalY = Math.max(0, Math.min(1, scaledY));
 
@@ -130,12 +135,18 @@ export function ImagePointEditor() {
       const points: Point[] = [];
       for (let i = 0; i < lines.length; i += 4) {
           if (lines[i] && lines[i+1] && lines[i+2]) {
-              const id = lines[i];
-              const x = parseFloat(lines[i+1]);
-              const y = parseFloat(lines[i+2]);
-              // Basic validation
-              if (!isNaN(x) && !isNaN(y) && id) {
-                  points.push({ id, x: Math.max(0, Math.min(1, x)), y: Math.max(0, Math.min(1, y)) });
+              const id = lines[i].trim(); // Trim whitespace
+              const xStr = lines[i+1].trim();
+              const yStr = lines[i+2].trim();
+              if (id && xStr && yStr) { // Ensure lines are not empty
+                const x = parseFloat(xStr);
+                const y = parseFloat(yStr);
+                // Basic validation
+                if (!isNaN(x) && !isNaN(y) && id) {
+                    points.push({ id, x: Math.max(0, Math.min(1, x)), y: Math.max(0, Math.min(1, y)) });
+                } else {
+                    console.warn(`Skipping invalid point data: id=${id}, x=${xStr}, y=${yStr}`);
+                }
               }
           }
       }
@@ -148,13 +159,22 @@ export function ImagePointEditor() {
         const reader = new FileReader();
         reader.onload = (e) => {
             const content = e.target?.result as string;
-            const loadedPoints = parsePointsFromString(content);
-            setPoints(loadedPoints);
-            // Reset matching if points are loaded
-            setMatchedPoints([]);
+            if (content) {
+                const loadedPoints = parsePointsFromString(content);
+                setPoints(loadedPoints);
+                // Reset matching if points are loaded
+                setMatchedPoints([]);
+            } else {
+                 console.error("Failed to read file content.");
+            }
+        };
+         reader.onerror = (e) => {
+            console.error("Error reading file:", e);
         };
         reader.readAsText(file);
     }
+     // Reset input value to allow loading the same file again
+     event.target.value = '';
  };
 
 
@@ -164,6 +184,7 @@ export function ImagePointEditor() {
         <div className="flex flex-col h-full p-4">
           <h2 className="text-xl font-semibold mb-4 text-foreground">Image 1</h2>
           <ImagePanel
+            uniqueId="image1" // Pass unique ID
             imageSrc={image1}
             points={points1}
             selectedPointId={selectedPointId1}
@@ -189,7 +210,7 @@ export function ImagePointEditor() {
                     <Download className="mr-2 h-4 w-4" /> Save Points 1
                 </Button>
                 <Button variant="outline" size="sm" asChild>
-                  <label htmlFor="load-points1" className="cursor-pointer">
+                  <label htmlFor="load-points1" className="cursor-pointer flex items-center"> {/* Added flex and items-center */}
                     <Upload className="mr-2 h-4 w-4" /> Load Points 1
                     <input
                       id="load-points1"
@@ -208,6 +229,7 @@ export function ImagePointEditor() {
         <div className="flex flex-col h-full p-4">
           <h2 className="text-xl font-semibold mb-4 text-foreground">Image 2</h2>
           <ImagePanel
+            uniqueId="image2" // Pass unique ID
             imageSrc={image2}
             points={points2}
             selectedPointId={selectedPointId2}
@@ -233,7 +255,7 @@ export function ImagePointEditor() {
                    <Download className="mr-2 h-4 w-4" /> Save Points 2
                </Button>
                <Button variant="outline" size="sm" asChild>
-                  <label htmlFor="load-points2" className="cursor-pointer">
+                  <label htmlFor="load-points2" className="cursor-pointer flex items-center"> {/* Added flex and items-center */}
                     <Upload className="mr-2 h-4 w-4" /> Load Points 2
                     <input
                       id="load-points2"
