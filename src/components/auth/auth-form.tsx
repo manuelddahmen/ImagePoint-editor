@@ -11,14 +11,16 @@ import {
   TwitterAuthProvider,
   type AuthError
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+// Import potentially null auth and error message
+import { auth, firebaseInitializationError } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Chrome, Mail, Lock, LogIn, UserPlus, Twitter, Github } from 'lucide-react'; // Using Github as placeholder for MS
+import { Chrome, Mail, Lock, LogIn, UserPlus, Twitter, Github, AlertTriangle } from 'lucide-react'; // Using Github as placeholder for MS
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Custom Microsoft Icon (simple SVG placeholder)
 const MicrosoftIcon = () => (
@@ -35,6 +37,20 @@ export function AuthForm() {
   const [signupPassword, setSignupPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  // If Firebase failed to initialize, show an error message instead of the form
+  if (!auth || firebaseInitializationError) {
+      return (
+           <Alert variant="destructive" className="w-[400px] mt-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Authentication Unavailable</AlertTitle>
+              <AlertDescription>
+                 Firebase authentication could not be initialized. Please check the console for errors or contact support.
+                 {firebaseInitializationError && <p className="mt-2 text-xs">{firebaseInitializationError}</p>}
+              </AlertDescription>
+           </Alert>
+      );
+  }
 
   const handleAuthError = (error: AuthError) => {
     console.error("Authentication error:", error);
@@ -85,6 +101,7 @@ export function AuthForm() {
 
   const handleEmailPasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!auth) return; // Should not happen if initial check passed, but safety first
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
@@ -99,6 +116,7 @@ export function AuthForm() {
 
   const handleEmailPasswordSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!auth) return;
     setLoading(true);
     try {
       await createUserWithEmailAndPassword(auth, signupEmail, signupPassword);
@@ -112,6 +130,7 @@ export function AuthForm() {
   };
 
   const handleOAuthSignIn = async (providerInstance: GoogleAuthProvider | OAuthProvider | TwitterAuthProvider) => {
+    if (!auth) return;
     setLoading(true);
     try {
       await signInWithPopup(auth, providerInstance);
