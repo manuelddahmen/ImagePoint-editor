@@ -31,6 +31,33 @@ import { getAuth, type Auth } from "firebase/auth";
 // If these variables are not set correctly, Firebase initialization will fail,
 // and authentication features will be unavailable. The application will display
 // an error message in this case.
+//
+// COMMON ERROR: FirebaseError: Error (auth/configuration-not-found)
+// ===================================================================
+// This specific error usually means one of the following:
+// 1. Incorrect Configuration in `.env.local`: Double-check that the API Key,
+//    Auth Domain, and Project ID in your `.env.local` file EXACTLY match the
+//    values from your Firebase project console. Copy and paste carefully.
+// 2. Authentication Providers Not Enabled: Ensure that the sign-in methods
+//    you intend to use (Email/Password, Google, Microsoft, Twitter/X.com) are
+//    ENABLED in your Firebase console:
+//    Go to Authentication > Sign-in method. Enable each provider you need.
+//    - For Google: Ensure you've configured the OAuth consent screen in Google Cloud Console
+//      and added the Client ID and Secret in the Firebase Google provider settings.
+//    - For Microsoft: You'll need to register an app in Azure AD, get the Client ID and Secret,
+//      and add them to the Firebase Microsoft provider settings.
+//    - For Twitter/X.com: You'll need to create an app on the Twitter Developer Portal,
+//      get the API Key and Secret, enable OAuth 1.0a, add the callback URL provided by Firebase,
+//      and configure these keys in the Firebase Twitter provider settings.
+// 3. Unauthorized Domain: The domain your application is running on (e.g.,
+//    `localhost`, your specific preview URL like `https://xxxx-studio...cloudworkstations.dev`,
+//    or your production domain) MUST be added to the list of authorized domains.
+//    Go to Authentication > Settings > Authorized domains. Add all necessary domains.
+//    For local development, `localhost` is usually added by default, but verify it.
+//    For cloud development environments (like IDX), you *must* add the preview URL.
+//
+// After making changes in the Firebase console or `.env.local`, you may need
+// to restart the Next.js development server for the changes to take effect.
 // ==============================================================================
 
 
@@ -48,29 +75,25 @@ let auth: Auth | null = null;
 let firebaseInitializationError: string | null = null;
 
 // Check if essential config is *actually* present (placeholders don't count)
-// We check the actual environment variables, not the potentially defaulted ones above.
-const isApiKeyMissing = !process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-const isAuthDomainMissing = !process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN;
-const isProjectIdMissing = !process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+const isApiKeyMissing = !process.env.NEXT_PUBLIC_FIREBASE_API_KEY || apiKey === "MISSING_API_KEY";
+const isAuthDomainMissing = !process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || authDomain === "MISSING_AUTH_DOMAIN";
+const isProjectIdMissing = !process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || projectId === "MISSING_PROJECT_ID";
 
-if (isApiKeyMissing || isAuthDomainMissing || isProjectIdMissing) {
+// Only set the error if it hasn't been set already (to avoid duplicate logs)
+if ((isApiKeyMissing || isAuthDomainMissing || isProjectIdMissing) && !firebaseInitializationError) {
     let missingVars = [];
     if (isApiKeyMissing) missingVars.push("NEXT_PUBLIC_FIREBASE_API_KEY");
     if (isAuthDomainMissing) missingVars.push("NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN");
     if (isProjectIdMissing) missingVars.push("NEXT_PUBLIC_FIREBASE_PROJECT_ID");
     firebaseInitializationError = `Missing Firebase configuration. Please set the following environment variables: ${missingVars.join(', ')}`;
     // Log error during server/client initialization instead of throwing
-    // Only log this error once during initialization phase
-    if (typeof window !== 'undefined') { // Log only on client-side to avoid duplicate server logs
-        console.error(firebaseInitializationError);
-    }
+    console.error(firebaseInitializationError); // Log configuration error immediately
 } else {
     // Construct the config object ONLY if essential variables are present
     const firebaseConfig: FirebaseOptions = {
         apiKey: apiKey,
         authDomain: authDomain,
         projectId: projectId,
-        // Use the potentially undefined optional values directly
         storageBucket: storageBucket,
         messagingSenderId: messagingSenderId,
         appId: appId,
@@ -82,8 +105,11 @@ if (isApiKeyMissing || isAuthDomainMissing || isProjectIdMissing) {
         try {
             app = initializeApp(firebaseConfig);
         } catch (error: any) {
-            firebaseInitializationError = firebaseInitializationError || `Firebase initialization error: ${error.message}`;
-            console.error(firebaseInitializationError, error);
+            // Only set if not already set by missing env vars check
+            if (!firebaseInitializationError) {
+                firebaseInitializationError = `Firebase initialization error: ${error.message}`;
+                console.error(firebaseInitializationError, error);
+            }
             app = null; // Ensure app is null on error
         }
     } else {
@@ -92,20 +118,22 @@ if (isApiKeyMissing || isAuthDomainMissing || isProjectIdMissing) {
 } // End of conditional initialization based on env vars
 
 
-// Initialize Auth only if app was successfully initialized/retrieved and no config error occurred
+// Initialize Auth only if app was successfully initialized/retrieved and no initialization error occurred
 if (app && !firebaseInitializationError) {
     try {
         auth = getAuth(app);
     } catch (error: any) {
-         firebaseInitializationError = `Firebase Auth initialization error: ${error.message}`;
-         console.error(firebaseInitializationError, error);
+        // Only set if not already set
+        if (!firebaseInitializationError) {
+             firebaseInitializationError = `Firebase Auth initialization error: ${error.message}`;
+             console.error(firebaseInitializationError, error);
+        }
          auth = null; // Ensure auth is null on error
     }
 } else if (!app && !firebaseInitializationError) {
-     // If app is null and we didn't have a config error, it means initialization failed for another reason
-     // or the config error block wasn't entered (shouldn't happen with current logic, but safety first)
+     // If app is null and we didn't have a config or init error, something else went wrong.
      firebaseInitializationError = "Firebase app instance is not available, cannot initialize Auth.";
-     // console.error(firebaseInitializationError); // Avoid redundant logging if config error already logged
+     console.error(firebaseInitializationError); // Log this specific case
 }
 
 
