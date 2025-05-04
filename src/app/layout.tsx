@@ -1,9 +1,10 @@
 import type {Metadata} from 'next';
 import './globals.css';
-import { Toaster } from "@/components/ui/toaster"; // Import Toaster
+import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from '@/context/auth-context'; // Import AuthProvider
 
 export const metadata: Metadata = {
-  title: 'ImagePoint Editor', // Updated title
+  title: 'ImagePoint Editor',
   description: 'Edit scaled coordinate points on images',
 };
 
@@ -14,10 +15,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      {/* Removed Geist font classes to rely on globals.css font-family */}
       <body className="antialiased">
-        {children}
-        <Toaster /> {/* Add Toaster component */}
+        <AuthProvider> {/* Wrap children with AuthProvider */}
+          {children}
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );
