@@ -3,61 +3,63 @@ import { initializeApp, getApps, getApp, type FirebaseOptions, type FirebaseApp 
 import { getAuth, type Auth } from "firebase/auth";
 
 // ==============================================================================
-// IMPORTANT: Firebase Configuration Setup
+// IMPORTANT: Firebase Configuration Troubleshooting (auth/configuration-not-found)
 // ==============================================================================
-// This application requires Firebase configuration values to be set in your
-// environment variables. These variables allow the app to connect to your
-// Firebase project for authentication and other services.
 //
-// Please ensure you have a `.env.local` file in the root of your project
-// with the following variables defined, replacing the placeholder values
-// with your actual Firebase project credentials:
+// The error "FirebaseError: Firebase: Error (auth/configuration-not-found)"
+// almost always means there's an issue with how your Firebase project is
+// configured or how your application is connecting to it.
 //
-// NEXT_PUBLIC_FIREBASE_API_KEY="YOUR_API_KEY"
-// NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="YOUR_AUTH_DOMAIN"
-// NEXT_PUBLIC_FIREBASE_PROJECT_ID="YOUR_PROJECT_ID"
+// PLEASE CHECK THE FOLLOWING CAREFULLY:
 //
-// Optional but recommended:
-// NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="YOUR_STORAGE_BUCKET"
-// NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="YOUR_MESSAGING_SENDER_ID"
-// NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID"
-// NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID="YOUR_MEASUREMENT_ID"
+// 1. CORRECT `.env.local` VALUES:
+//    - Ensure you have a `.env.local` file in the root of your project.
+//    - Verify that the following variables are present and CORRECTLY copied
+//      from your Firebase project settings (Project settings > General > Your apps > Web app):
 //
-// You can find these values in your Firebase project console:
-// Project settings > General > Your apps > Web app > SDK setup and configuration > Config
+//      NEXT_PUBLIC_FIREBASE_API_KEY="YOUR_ACTUAL_API_KEY"
+//      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="YOUR_ACTUAL_AUTH_DOMAIN"
+//      NEXT_PUBLIC_FIREBASE_PROJECT_ID="YOUR_ACTUAL_PROJECT_ID"
+//      # Optional but recommended:
+//      # NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="YOUR_STORAGE_BUCKET"
+//      # NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="YOUR_MESSAGING_SENDER_ID"
+//      # NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID"
+//      # NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID="YOUR_MEASUREMENT_ID"
 //
-// See the `.env.local.example` file for a template.
+//    - TRIPLE-CHECK for typos or extra spaces.
+//    - Make sure you are using the ACTUAL values, not placeholder text like "YOUR_API_KEY".
+//    - Ensure the `.env.local` file is in the project's root directory.
 //
-// If these variables are not set correctly, Firebase initialization will fail,
-// and authentication features will be unavailable. The application will display
-// an error message in this case.
+// 2. ENABLE AUTHENTICATION PROVIDERS IN FIREBASE CONSOLE:
+//    - Go to your Firebase project console -> Authentication -> Sign-in method.
+//    - You MUST ENABLE every sign-in method you intend to use in your app.
+//      This application attempts to use:
+//        - Email/Password (Enable this)
+//        - Google (Enable this and follow configuration steps if needed)
+//        - Microsoft (Enable this and follow configuration steps)
+//        - X (Twitter) (Enable this and follow configuration steps)
+//    - If a provider is not enabled here, Firebase will reject attempts to use it,
+//      sometimes resulting in a 'configuration-not-found' error.
 //
-// COMMON ERROR: FirebaseError: Error (auth/configuration-not-found)
-// ===================================================================
-// This specific error usually means one of the following:
-// 1. Incorrect Configuration in `.env.local`: Double-check that the API Key,
-//    Auth Domain, and Project ID in your `.env.local` file EXACTLY match the
-//    values from your Firebase project console. Copy and paste carefully.
-// 2. Authentication Providers Not Enabled: Ensure that the sign-in methods
-//    you intend to use (Email/Password, Google, Microsoft, Twitter/X.com) are
-//    ENABLED in your Firebase console:
-//    Go to Authentication > Sign-in method. Enable each provider you need.
-//    - For Google: Ensure you've configured the OAuth consent screen in Google Cloud Console
-//      and added the Client ID and Secret in the Firebase Google provider settings.
-//    - For Microsoft: You'll need to register an app in Azure AD, get the Client ID and Secret,
-//      and add them to the Firebase Microsoft provider settings.
-//    - For Twitter/X.com: You'll need to create an app on the Twitter Developer Portal,
-//      get the API Key and Secret, enable OAuth 1.0a, add the callback URL provided by Firebase,
-//      and configure these keys in the Firebase Twitter provider settings.
-// 3. Unauthorized Domain: The domain your application is running on (e.g.,
-//    `localhost`, your specific preview URL like `https://xxxx-studio...cloudworkstations.dev`,
-//    or your production domain) MUST be added to the list of authorized domains.
-//    Go to Authentication > Settings > Authorized domains. Add all necessary domains.
-//    For local development, `localhost` is usually added by default, but verify it.
-//    For cloud development environments (like IDX), you *must* add the preview URL.
+// 3. AUTHORIZE DOMAINS IN FIREBASE CONSOLE:
+//    - Go to your Firebase project console -> Authentication -> Settings -> Authorized domains.
+//    - The domain your application is running on MUST be listed here.
+//      - For local development: `localhost` should usually be present.
+//      - For cloud development environments (like IDX, Gitpod, Codespaces): You MUST add the
+//        specific preview URL (e.g., `https://*.cloudworkstations.dev`, `https://*.gitpod.io`).
+//        Check your browser's address bar for the exact domain.
+//      - For production: Add your final deployment domain(s).
+//    - Failure to authorize the domain will prevent OAuth providers (Google, Microsoft, X)
+//      from working correctly and can cause this error.
 //
-// After making changes in the Firebase console or `.env.local`, you may need
-// to restart the Next.js development server for the changes to take effect.
+// 4. RESTART THE DEVELOPMENT SERVER:
+//    - After creating or modifying `.env.local` or changing Firebase console settings,
+//      STOP your Next.js development server (Ctrl+C in the terminal) and RESTART it (`npm run dev`).
+//      Environment variables are loaded at build/start time.
+//
+// By systematically checking these four points, you should be able to resolve
+// the `auth/configuration-not-found` error. The application code itself is
+// designed to work once the Firebase configuration is correctly set up.
 // ==============================================================================
 
 
@@ -122,6 +124,16 @@ if ((isApiKeyMissing || isAuthDomainMissing || isProjectIdMissing) && !firebaseI
 if (app && !firebaseInitializationError) {
     try {
         auth = getAuth(app);
+        // Add a check here to potentially catch config errors early on client-side
+        // Note: This might not catch *all* config errors, but can help.
+        // It might trigger a network request.
+        // auth.operations.then(() => {}).catch(err => {
+        //   if (!firebaseInitializationError) {
+        //     firebaseInitializationError = `Firebase Auth runtime error (check config/providers/domains): ${err.message}`;
+        //     console.error(firebaseInitializationError, err);
+        //   }
+        //   auth = null;
+        // });
     } catch (error: any) {
         // Only set if not already set
         if (!firebaseInitializationError) {

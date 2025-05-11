@@ -7,7 +7,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithPopup,
   GoogleAuthProvider,
-  OAuthProvider,
+  GithubAuthProvider, // Changed from OAuthProvider
   TwitterAuthProvider,
   type AuthError
 } from 'firebase/auth';
@@ -19,16 +19,8 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Chrome, Mail, Lock, LogIn, UserPlus, Twitter, Github, AlertTriangle } from 'lucide-react'; // Using Github as placeholder for MS
+import { Chrome, Mail, Lock, LogIn, UserPlus, Twitter, Github, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-
-// Custom Microsoft Icon (simple SVG placeholder)
-const MicrosoftIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path fillRule="evenodd" clipRule="evenodd" d="M1 1H7V7H1V1ZM9 1H15V7H9V1ZM1 9H7V15H1V9ZM9 9H15V15H9V9Z" fill="#7FBA00"/>
-    </svg>
-);
-
 
 export function AuthForm() {
   const [loginEmail, setLoginEmail] = useState('');
@@ -53,7 +45,7 @@ export function AuthForm() {
   }
 
   const handleAuthError = (error: AuthError) => {
-    console.error("Authentication error:", error);
+    console.error("Authentication error:", error.code, error.message);
     let description = 'An unknown error occurred.';
     switch (error.code) {
         case 'auth/user-not-found':
@@ -76,20 +68,23 @@ export function AuthForm() {
              description = 'An account already exists with the same email address but different sign-in credentials. Sign in using a provider associated with this email address.';
              break;
         case 'auth/auth-domain-config-required':
-             description = 'Authentication domain configuration is required.';
+             description = 'Authentication domain configuration is required. Check Firebase settings.';
              break;
         case 'auth/cancelled-popup-request':
              description = 'Only one popup request is allowed at a time.';
              break;
         case 'auth/operation-not-allowed':
-             description = 'The sign-in method is not enabled in Firebase console.';
+             description = 'The sign-in method is not enabled in Firebase console. Please enable the provider (e.g., Google, GitHub, Email/Password).';
              break;
         case 'auth/unauthorized-domain':
-             description = 'This domain is not authorized for OAuth operations for your Firebase project.';
+             description = 'This domain is not authorized for OAuth operations for your Firebase project. Add the domain in Firebase Console > Authentication > Settings > Authorized domains.';
+             break;
+        case 'auth/configuration-not-found':
+             description = 'Firebase configuration error. Check environment variables (API Key, Auth Domain, Project ID) and ensure providers/domains are set up correctly in the Firebase console.';
              break;
         // Add more specific cases as needed
         default:
-            description = error.message; // Use Firebase's message as fallback
+            description = `An error occurred: ${error.message} (Code: ${error.code})`; // Use Firebase's message as fallback
             break;
     }
     toast({
@@ -129,7 +124,7 @@ export function AuthForm() {
     }
   };
 
-  const handleOAuthSignIn = async (providerInstance: GoogleAuthProvider | OAuthProvider | TwitterAuthProvider) => {
+  const handleOAuthSignIn = async (providerInstance: GoogleAuthProvider | GithubAuthProvider | TwitterAuthProvider) => {
     if (!auth) return;
     setLoading(true);
     try {
@@ -206,8 +201,8 @@ export function AuthForm() {
               <Button variant="outline" onClick={() => handleOAuthSignIn(new GoogleAuthProvider())} disabled={loading}>
                 <Chrome className="mr-2" /> Google
               </Button>
-              <Button variant="outline" onClick={() => handleOAuthSignIn(new OAuthProvider('microsoft.com'))} disabled={loading}>
-                 <MicrosoftIcon /> <span className="ml-2">Microsoft</span>
+              <Button variant="outline" onClick={() => handleOAuthSignIn(new GithubAuthProvider())} disabled={loading}>
+                 <Github className="mr-2" /> GitHub
               </Button>
               <Button variant="outline" onClick={() => handleOAuthSignIn(new TwitterAuthProvider())} disabled={loading}>
                 <Twitter className="mr-2" /> X.com
@@ -274,8 +269,8 @@ export function AuthForm() {
                <Button variant="outline" onClick={() => handleOAuthSignIn(new GoogleAuthProvider())} disabled={loading}>
                  <Chrome className="mr-2" /> Google
                </Button>
-               <Button variant="outline" onClick={() => handleOAuthSignIn(new OAuthProvider('microsoft.com'))} disabled={loading}>
-                 <MicrosoftIcon /> <span className="ml-2">Microsoft</span>
+               <Button variant="outline" onClick={() => handleOAuthSignIn(new GithubAuthProvider())} disabled={loading}>
+                 <Github className="mr-2" /> GitHub
                </Button>
                <Button variant="outline" onClick={() => handleOAuthSignIn(new TwitterAuthProvider())} disabled={loading}>
                  <Twitter className="mr-2" /> X.com
