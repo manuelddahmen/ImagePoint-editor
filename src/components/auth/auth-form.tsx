@@ -7,8 +7,8 @@ import {
   createUserWithEmailAndPassword,
   signInWithPopup,
   GoogleAuthProvider,
-  GithubAuthProvider, // Changed from OAuthProvider
-  TwitterAuthProvider,
+  GithubAuthProvider,
+  // TwitterAuthProvider, // Removed
   type AuthError
 } from 'firebase/auth';
 // Import potentially null auth and error message
@@ -19,7 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Chrome, Mail, Lock, LogIn, UserPlus, Twitter, Github, AlertTriangle } from 'lucide-react';
+import { Chrome, Mail, Lock, LogIn, UserPlus, Github, AlertTriangle } from 'lucide-react'; // Removed Twitter icon
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export function AuthForm() {
@@ -124,7 +124,7 @@ export function AuthForm() {
     }
   };
 
-  const handleOAuthSignIn = async (providerInstance: GoogleAuthProvider | GithubAuthProvider | TwitterAuthProvider) => {
+  const handleOAuthSignIn = async (providerInstance: GoogleAuthProvider | GithubAuthProvider /* | TwitterAuthProvider Removed */) => {
     if (!auth) return;
     setLoading(true);
     try {
@@ -197,16 +197,18 @@ export function AuthForm() {
                 </span>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2"> {/* Changed grid-cols-3 to grid-cols-2 */}
               <Button variant="outline" onClick={() => handleOAuthSignIn(new GoogleAuthProvider())} disabled={loading}>
                 <Chrome className="mr-2" /> Google
               </Button>
               <Button variant="outline" onClick={() => handleOAuthSignIn(new GithubAuthProvider())} disabled={loading}>
                  <Github className="mr-2" /> GitHub
               </Button>
+              {/* Removed X.com Button
               <Button variant="outline" onClick={() => handleOAuthSignIn(new TwitterAuthProvider())} disabled={loading}>
                 <Twitter className="mr-2" /> X.com
               </Button>
+              */}
             </div>
           </CardContent>
         </Card>
@@ -265,16 +267,18 @@ export function AuthForm() {
                 </span>
               </div>
             </div>
-             <div className="grid grid-cols-3 gap-2">
+             <div className="grid grid-cols-2 gap-2"> {/* Changed grid-cols-3 to grid-cols-2 */}
                <Button variant="outline" onClick={() => handleOAuthSignIn(new GoogleAuthProvider())} disabled={loading}>
                  <Chrome className="mr-2" /> Google
                </Button>
                <Button variant="outline" onClick={() => handleOAuthSignIn(new GithubAuthProvider())} disabled={loading}>
                  <Github className="mr-2" /> GitHub
                </Button>
+               {/* Removed X.com Button
                <Button variant="outline" onClick={() => handleOAuthSignIn(new TwitterAuthProvider())} disabled={loading}>
                  <Twitter className="mr-2" /> X.com
                </Button>
+               */}
              </div>
           </CardContent>
         </Card>
