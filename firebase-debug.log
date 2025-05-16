@@ -1,0 +1,41 @@
+[debug] [2025-05-16T18:04:59.733Z] ----------------------------------------------------------------------
+[debug] [2025-05-16T18:04:59.738Z] Command:       /nix/store/rbdrkcs5kkwpalxcd7c6bnm33lk2955n-nodejs-20.19.0/bin/node /nix/store/x1y0l2xj62jgmz6csprhhqzibvdggdpk-firebase-tools-14.3.1/lib/node_modules/firebase-tools/lib/bin/firebase.js init hosting
+[debug] [2025-05-16T18:04:59.739Z] CLI Version:   14.3.1
+[debug] [2025-05-16T18:04:59.740Z] Platform:      linux
+[debug] [2025-05-16T18:04:59.740Z] Node Version:  v20.19.0
+[debug] [2025-05-16T18:04:59.740Z] Time:          Fri May 16 2025 18:04:59 GMT+0000 (Coordinated Universal Time)
+[debug] [2025-05-16T18:04:59.741Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-05-16T18:04:59.755Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-05-16T18:04:59.757Z] > authorizing via signed-in user (dathewolf@gmail.com)
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  /home/user/studio
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] but for now we'll just set up a default project.
+[info] 
+[debug] [2025-05-16T18:17:28.898Z] Checked if tokens are valid: true, expires at: 1747422259515
+[debug] [2025-05-16T18:17:28.900Z] Checked if tokens are valid: true, expires at: 1747422259515
+[debug] [2025-05-16T18:17:28.915Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=100
+[debug] [2025-05-16T18:17:29.411Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2025-05-16T18:17:29.411Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[info] i  Using project imagepoint-editor (ImagePoint Editor) 
+[info] 
+=== Hosting Setup
+[debug] [2025-05-16T18:17:35.476Z] Checked if tokens are valid: true, expires at: 1747422259515
+[debug] [2025-05-16T18:17:35.476Z] Checked if tokens are valid: true, expires at: 1747422259515
+[debug] [2025-05-16T18:17:35.477Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/imagepoint-editor [none]
+[debug] [2025-05-16T18:17:35.752Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/imagepoint-editor 200
+[debug] [2025-05-16T18:17:35.752Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/imagepoint-editor {"projectId":"imagepoint-editor","projectNumber":"343170157753","displayName":"ImagePoint Editor","name":"projects/imagepoint-editor","resources":{"hostingSite":"imagepoint-editor","realtimeDatabaseInstance":"imagepoint-editor-default-rtdb"},"state":"ACTIVE","etag":"1_76daa2c9-e67d-406f-8566-99214dc34086"}
